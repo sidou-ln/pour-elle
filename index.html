@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Des milliers de je t'aime</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-lock:#171019;
+    --bg-lock-2:#241722;
+    --accent:#e2919f;
+    --accent-soft:#f3cdd4;
+    --bg-message:#f7f1ea;
+    --ink:#2c2430;
+    --ink-soft:#7a6d78;
+    --serif:'Fraunces', serif;
+    --sans:'Manrope', sans-serif;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0; padding:0; height:100%; overflow:hidden;
+    font-family:var(--sans);
+    background:var(--bg-lock);
+    touch-action:none;
+    user-select:none;
+  }
+  #stage{
+    position:relative;
+    width:100%;
+    height:100dvh;
+    overflow:hidden;
+  }
+
+  /* ---------- SCREENS ---------- */
+  .screen{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center;
+    transition: transform .65s cubic-bezier(.22,.61,.36,1), opacity .55s ease;
+  }
+
+  /* ===== 1. LOCK SCREEN ===== */
+  #screen-lock{
+    justify-content:center;
+    color:var(--accent-soft);
+    z-index:3;
+  }
+  /* 📷 Photo de fond de l'écran verrouillé : place ton fichier dans assets/photo-fond.jpg */
+  .lock-bg{
+    position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(23,16,25,.35), rgba(23,16,25,.75) 70%, var(--bg-lock)),
+               radial-gradient(circle at 50% 20%, var(--bg-lock-2), var(--bg-lock) 70%);
+    background-size:cover; background-position:center;
+    z-index:0;
+  }
+  .lock-bg img{
+    position:absolute; inset:0; width:100%; height:100%;
+    object-fit:cover; z-index:-1;
+  }
+  #screen-lock .glow{
+    position:absolute; width:260px; height:260px; border-radius:50%;
+    background:radial-gradient(circle, rgba(226,145,159,.35), transparent 70%);
+    filter:blur(10px);
+    animation: breathe 4.5s ease-in-out infinite;
+    z-index:1;
+  }
+  @keyframes breathe{
+    0%,100%{ transform:scale(1); opacity:.7; }
+    50%{ transform:scale(1.12); opacity:1; }
+  }
+  #screen-lock .cute-msg{
+    font-family:var(--serif);
+    font-size:15px;
+    letter-spacing:.3px;
+    color:rgba(243,205,212,.9);
+    z-index:1;
+    margin-bottom:18px;
+    padding:0 30px;
+    text-align:center;
+    animation: floaty 3.2s ease-in-out infinite;
+  }
+  @keyframes floaty{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-4px); }
+  }
+  #screen-lock .clock{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:clamp(48px,15vw,72px);
+    letter-spacing:1px;
+    margin-bottom:6px;
+    z-index:1;
+  }
+  #screen-lock .hint{
+    font-size:13px;
+    letter-spacing:.4px;
+    color:rgba(243,205,212,.65);
+    z-index:1;
+    margin-top:2px;
+  }
+  #screen-lock .hint::after{
+    content:'';
+    display:block;
+    width:34px; height:2px;
+    margin:14px auto 0;
+    background:rgba(243,205,212,.5);
+    border-radius:2px;
+    animation:pulseline 1.8s ease-in-out infinite;
+  }
+  @keyframes pulseline{ 0%,100%{opacity:.3} 50%{opacity:.9} }
+
+  /* ===== 2. PLAYER SCREEN ===== */
+  #screen-player{
+    background:linear-gradient(180deg, var(--bg-lock) 0%, #1d1420 60%, var(--bg-lock-2) 100%);
+    justify-content:center;
+    padding: 8vh 28px 6vh;
+    transform: translateX(100%);
+    z-index:2;
+  }
+  .cover{
+    width:min(62vw,240px); height:min(62vw,240px);
+    border-radius:18px;
+    margin-bottom:34px;
+    background:
+      radial-gradient(circle at 30% 25%, rgba(255,255,255,.18), transparent 55%),
+      linear-gradient(155deg, #3a2432, #201420 70%);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 25px 50px -20px rgba(0,0,0,.6);
+    position:relative;
+    overflow:hidden;
+  }
+  /* 📷 Photo / pochette du titre : place ton fichier dans assets/cover.jpg */
+  .cover img{
+    position:absolute; inset:0; width:100%; height:100%;
+    object-fit:cover;
+  }
+  .cover svg{ width:34%; height:34%; opacity:.55; display:none; }
+  .cover.no-cover svg{ display:block; }
+
+  #screen-player.pop{ animation: popIn .6s cubic-bezier(.22,.9,.36,1); }
+  @keyframes popIn{
+    0%{ transform:translateX(0) scale(.9); opacity:.3; }
+    60%{ transform:translateX(0) scale(1.03); opacity:1; }
+    100%{ transform:translateX(0) scale(1); opacity:1; }
+  }
+
+  .track-title{
+    font-family:var(--serif);
+    color:#fbeff1;
+    font-size:22px;
+    text-align:center;
+    margin:0 0 4px;
+  }
+  .track-artist{
+    color:var(--ink-soft);
+    font-size:14px;
+    margin:0 0 30px;
+  }
+  .progress-wrap{ width:100%; max-width:320px; }
+  .progress-bar{
+    height:3px; width:100%; border-radius:3px;
+    background:rgba(255,255,255,.14);
+    position:relative; overflow:hidden;
+  }
+  .progress-fill{
+    position:absolute; left:0; top:0; bottom:0;
+    width:0%;
+    background:var(--accent);
+    border-radius:3px;
+  }
+  .time-row{
+    display:flex; justify-content:space-between;
+    font-size:11px; color:var(--ink-soft);
+    margin-top:7px; font-variant-numeric:tabular-nums;
+  }
+  .controls{
+    display:flex; align-items:center; gap:30px;
+    margin-top:32px;
+  }
+  .controls button{
+    background:none; border:none; color:#f5e6e9; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    opacity:.9;
+  }
+  .controls button svg{ width:22px; height:22px; }
+  #playBtn{
+    width:58px; height:58px; border-radius:50%;
+    background:var(--accent);
+    color:#241722;
+  }
+  #playBtn svg{ width:22px; height:22px; }
+
+  .swipe-hint{
+    position:absolute; bottom:34px; left:0; right:0;
+    text-align:center; font-size:12px; color:rgba(255,255,255,.4);
+    letter-spacing:.3px;
+  }
+  .swipe-hint .arrow{ display:inline-block; animation:nudge 1.6s ease-in-out infinite; }
+  @keyframes nudge{ 0%,100%{transform:translateX(0)} 50%{transform:translateX(6px)} }
+
+  /* ===== 3. MESSAGE SCREEN ===== */
+  #screen-message{
+    background:var(--bg-message);
+    justify-content:flex-start;
+    transform: translateX(100%);
+    z-index:1;
+    padding: 9vh 30px 0;
+    color:var(--ink);
+    text-align:center;
+  }
+  .mini-player{
+    display:flex; align-items:center; gap:12px;
+    width:100%; max-width:340px;
+    padding:10px 14px;
+    border-radius:14px;
+    background:rgba(44,36,48,.06);
+    margin-bottom:8vh;
+  }
+  .mini-cover{
+    width:34px; height:34px; border-radius:8px;
+    background:linear-gradient(155deg, var(--accent), #c96b7d);
+    flex-shrink:0;
+    overflow:hidden;
+  }
+  .mini-cover img{ width:100%; height:100%; object-fit:cover; }
+  .mini-info{ text-align:left; flex:1; overflow:hidden; }
+  .mini-info .t{ font-size:12.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mini-info .a{ font-size:11px; color:var(--ink-soft); }
+  .mini-eq{ display:flex; gap:2px; align-items:flex-end; height:14px; }
+  .mini-eq span{ width:2.5px; background:var(--accent); border-radius:2px; animation:eq 1s ease-in-out infinite; }
+  .mini-eq span:nth-child(2){ animation-delay:.2s; }
+  .mini-eq span:nth-child(3){ animation-delay:.4s; }
+  @keyframes eq{ 0%,100%{height:4px} 50%{height:14px} }
+
+  .photo-slot{
+    width:min(58vw,220px); height:min(58vw,220px);
+    border-radius:50%;
+    background:linear-gradient(155deg, var(--accent-soft), #eddcd7);
+    display:flex; align-items:center; justify-content:center;
+    color:#a8717d; font-size:13px; text-align:center; padding:16px;
+    margin-bottom:36px;
+    opacity:0; transform:translateY(14px) scale(.96);
+    transition: opacity .7s ease, transform .7s ease;
+    border: 1px solid rgba(168,113,125,.15);
+    position:relative; overflow:hidden;
+  }
+  /* 📷 Photo du couple sur l'écran message : place ton fichier dans assets/photo-message.jpg */
+  .photo-slot img{
+    position:absolute; inset:0; width:100%; height:100%;
+    object-fit:cover; display:none;
+  }
+  .photo-slot.has-photo img{ display:block; }
+  .photo-slot.has-photo .photo-fallback{ display:none; }
+
+  .message-text{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:clamp(19px,5.4vw,24px);
+    line-height:1.5;
+    max-width:300px;
+    opacity:0; transform:translateY(14px);
+    transition: opacity .8s ease .15s, transform .8s ease .15s;
+  }
+  .message-text b{ font-weight:500; color:#c96b7d; }
+
+  #screen-message.revealed .photo-slot{ opacity:1; transform:translateY(0) scale(1); }
+  #screen-message.revealed .message-text{ opacity:1; transform:translateY(0); }
+
+  .tap-hint{
+    margin-top:40px; font-size:12px; color:var(--ink-soft);
+    opacity:.8;
+  }
+  #screen-message.revealed .tap-hint{ display:none; }
+
+  .tap-hint.shake{ animation: shakeHint .4s ease; }
+  @keyframes shakeHint{
+    0%,100%{ transform:translateX(0); }
+    20%{ transform:translateX(-6px); }
+    40%{ transform:translateX(6px); }
+    60%{ transform:translateX(-4px); }
+    80%{ transform:translateX(4px); }
+  }
+  .dots{
+    margin-top:10px; font-size:14px; letter-spacing:4px;
+  }
+
+  /* ---------- STATE TRANSFORMS ---------- */
+  #stage[data-state="player"] #screen-lock{ transform:translateX(-100%); opacity:0; }
+  #stage[data-state="player"] #screen-player{ transform:translateX(0); }
+
+  #stage[data-state="message"] #screen-player{ transform:translateX(-100%); }
+  #stage[data-state="message"] #screen-message{ transform:translateX(0); }
+</style>
+</head>
+<body>
+
+<div id="stage" data-state="lock">
+
+  <!-- 1. ECRAN VERROUILLE -->
+  <section id="screen-lock" class="screen">
+    <div class="lock-bg">
+      <!-- Remplace le src ci-dessous par ton image (assets/photo-fond.jpg) -->
+      <img src="assets/photo-fond.jpg" alt="" onerror="this.style.display='none';">
+    </div>
+    <div class="glow"></div>
+    <!-- ✏️ Ton petit message mignon ici -->
+    <div class="cute-msg">Quelque chose rien que pour toi… 💌</div>
+    <div class="clock" id="clockDisplay">00:15</div>
+    <div class="hint">touche l'écran</div>
+  </section>
+
+  <!-- 2. LECTEUR MUSIQUE -->
+  <section id="screen-player" class="screen">
+    <div class="cover">
+      <!-- 📷 Pochette / photo du titre : assets/cover.jpg -->
+      <img src="assets/cover.jpg" alt="" onerror="this.style.display='none'; this.parentElement.classList.add('no-cover');">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#f3cdd4" stroke-width="1.4"><path d="M9 18V5l12-2v13" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+    </div>
+    <p class="track-title">Des milliers de je t'aime</p>
+    <p class="track-artist">Ta chanson</p>
+
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="time-row">
+        <span id="timeCurrent">0:15</span>
+        <span id="timeTotal">--:--</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button aria-label="précédent"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+      <button id="playBtn" aria-label="lecture"><svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+      <button aria-label="suivant"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zm-3.5 6L4 6v12z"/></svg></button>
+    </div>
+
+    <div class="swipe-hint">glisse pour continuer <span class="arrow">→</span></div>
+  </section>
+
+  <!-- 3. ECRAN MESSAGE -->
+  <section id="screen-message" class="screen">
+    <div class="mini-player">
+      <div class="mini-cover"><img src="assets/cover.jpg" alt="" onerror="this.style.display='none';"></div>
+      <div class="mini-info">
+        <div class="t">Des milliers de je t'aime</div>
+        <div class="a">Ta chanson</div>
+      </div>
+      <div class="mini-eq"><span></span><span></span><span></span></div>
+    </div>
+
+    <div class="photo-slot" id="photoSlot">
+      <!-- 📷 Photo du couple : assets/photo-message.jpg -->
+      <img src="assets/photo-message.jpg" alt="" onerror="this.style.display='none';" onload="document.getElementById('photoSlot').classList.add('has-photo')">
+      <span class="photo-fallback">sa photo ici<br>(à remplacer)</span>
+    </div>
+
+    <!-- ✏️ Ton message final ici -->
+    <p class="message-text">Parce qu'avec toi, je n'ai pas besoin de chercher la réponse.<br><b>C'est toi.</b> ❤️</p>
+
+    <p class="tap-hint" id="tapHint">touche encore l'écran</p>
+  </section>
+
+</div>
+
+<!-- 🎵 Emplacement du fichier audio : place ton fichier dans assets/musique.mp3 -->
+<audio id="audio" src="assets/musique.mp3" preload="auto"></audio>
+
+<script>
+  const stage = document.getElementById('stage');
+  const screenLock = document.getElementById('screen-lock');
+  const screenPlayer = document.getElementById('screen-player');
+  const screenMessage = document.getElementById('screen-message');
+  const audio = document.getElementById('audio');
+  const playBtn = document.getElementById('playBtn');
+  const playIcon = document.getElementById('playIcon');
+  const progressFill = document.getElementById('progressFill');
+  const timeCurrent = document.getElementById('timeCurrent');
+  const timeTotal = document.getElementById('timeTotal');
+  const tapHint = document.getElementById('tapHint');
+
+  const START_TIME = 15; // démarrage à 00:15
+  let state = 'lock';
+
+  function fmt(s){
+    if(!isFinite(s)) return '--:--';
+    const m = Math.floor(s/60), sec = Math.floor(s%60);
+    return m + ':' + String(sec).padStart(2,'0');
+  }
+
+  function playAudio(){
+    audio.currentTime = START_TIME;
+    audio.play().catch(()=>{ /* autoplay bloqué tant qu'il n'y a pas eu de geste : normalement ok ici car déclenché par un tap */ });
+    playIcon.innerHTML = '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>'; // icône pause
+  }
+
+  audio.addEventListener('loadedmetadata', ()=>{
+    timeTotal.textContent = fmt(audio.duration);
+  });
+  audio.addEventListener('timeupdate', ()=>{
+    if(audio.duration){
+      progressFill.style.width = (audio.currentTime/audio.duration*100)+'%';
+    }
+    timeCurrent.textContent = fmt(audio.currentTime);
+  });
+
+  playBtn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    if(audio.paused){
+      audio.play();
+      playIcon.innerHTML = '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>';
+    } else {
+      audio.pause();
+      playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+    }
+  });
+
+  // ---- Mécanique "il faut cliquer plusieurs fois" sur l'écran message ----
+  // La musique n'est JAMAIS touchée ici : elle continue de jouer normalement.
+  const TAPS_NEEDED = 3;
+  let messageTapCount = 0;
+  const nudgeMessages = [
+    'encore un peu...',
+    'presque...',
+    'allez, une dernière fois...',
+    'juste ici ✨'
+  ];
+
+  function nudgeMessage(){
+    tapHint.textContent = nudgeMessages[(messageTapCount - 1) % nudgeMessages.length];
+    tapHint.classList.remove('shake');
+    void tapHint.offsetWidth; // force le redémarrage de l'animation
+    tapHint.classList.add('shake');
+  }
+
+  // ---- Gestion des gestes ----
+  let touchStartX = 0, touchStartY = 0, touchStartTime = 0;
+
+  stage.addEventListener('touchstart', (e)=>{
+    const t = e.changedTouches[0];
+    touchStartX = t.clientX; touchStartY = t.clientY;
+    touchStartTime = Date.now();
+  }, {passive:true});
+
+  stage.addEventListener('touchend', (e)=>{
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+    const dt = Date.now() - touchStartTime;
+    const isSwipe = Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy);
+    const isTap = Math.abs(dx) < 12 && Math.abs(dy) < 12 && dt < 400;
+
+    handleGesture({isSwipe, isTap, dx});
+  }, {passive:true});
+
+  // fallback souris pour tester sur ordinateur
+  stage.addEventListener('click', ()=>{ handleGesture({isSwipe:false, isTap:true, dx:0}); });
+
+  function handleGesture({isSwipe, isTap, dx}){
+    if(state === 'lock' && isTap){
+      state = 'player';
+      stage.dataset.state = 'player';
+      screenPlayer.classList.add('pop');
+      setTimeout(()=>screenPlayer.classList.remove('pop'), 650);
+      playAudio(); // la musique démarre directement au clic
+      return;
+    }
+    if(state === 'player' && (isSwipe && dx < 0)){
+      state = 'message';
+      stage.dataset.state = 'message';
+      return;
+    }
+    if(state === 'message' && isTap){
+      if(screenMessage.classList.contains('revealed')) return;
+      messageTapCount++;
+      if(messageTapCount >= TAPS_NEEDED){
+        screenMessage.classList.add('revealed');
+      } else {
+        nudgeMessage(); // pousse à cliquer encore, la musique continue
+      }
+      return;
+    }
+  }
+
+  // horloge de l'écran verrouillé (juste esthétique)
+  const clockEl = document.getElementById('clockDisplay');
+  function tickClock(){
+    const now = new Date();
+    clockEl.textContent = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  }
+  tickClock();
+  setInterval(tickClock, 15000);
+</script>
+</body>
+</html>
