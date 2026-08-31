@@ -344,12 +344,12 @@
     </div>
 
     <div class="controls">
-      <button aria-label="précédent"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
-      <button id="playBtn" aria-label="lecture"><svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
-      <button aria-label="suivant"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zm-3.5 6L4 6v12z"/></svg></button>
+      <button aria-label="précédent" onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+      <button id="playBtn" aria-label="lecture" ontouchend="event.stopPropagation();"><svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+      <button aria-label="suivant" onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zm-3.5 6L4 6v12z"/></svg></button>
     </div>
 
-    <div class="swipe-hint">glisse pour continuer <span class="arrow">→</span></div>
+    <div class="swipe-hint">touche pour continuer <span class="arrow">→</span></div>
   </section>
 
   <!-- 3. ECRAN MESSAGE -->
@@ -489,7 +489,7 @@
       playAudio(); // la musique démarre directement au clic
       return;
     }
-    if(state === 'player' && (isSwipe && dx < 0)){
+    if(state === 'player' && (isTap || (isSwipe && dx < 0))){
       state = 'message';
       stage.dataset.state = 'message';
       screenMessage.classList.add('pop');
