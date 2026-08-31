@@ -414,25 +414,22 @@
     playIcon.innerHTML = '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>';
   }
 
+  const DISPLAY_END = 83; // 01:23
   audio.addEventListener('loadedmetadata', ()=>{
-    timeTotal.textContent = fmt(audio.duration);
+    timeTotal.textContent = '1:23';
+    timeCurrent.textContent = '0:15';
   });
   audio.addEventListener('timeupdate', ()=>{
-    if(audio.duration){
-      progressFill.style.width = (audio.currentTime/audio.duration*100)+'%';
-    }
-    timeCurrent.textContent = fmt(audio.currentTime);
+    const elapsed = Math.max(0, audio.currentTime - START_TIME);
+    const visibleDuration = DISPLAY_END - START_TIME;
+    progressFill.style.width = Math.min(100, Math.max(0, elapsed / visibleDuration * 100)) + '%';
+    timeCurrent.textContent = fmt(Math.min(DISPLAY_END, audio.currentTime));
   });
 
+  // Le bouton central est visuel : tout toucher sur le lecteur passe à l'étape 3.
   playBtn.addEventListener('click', (e)=>{
     e.stopPropagation();
-    if(audio.paused){
-      audio.play();
-      playIcon.innerHTML = '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>';
-    } else {
-      audio.pause();
-      playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
-    }
+    goToMessage();
   });
 
   // Tous les boutons (retour, précédent, lecture, suivant) ne doivent jamais
@@ -463,24 +460,7 @@
     }
   }
 
-  // ---- Mécanique "il faut cliquer plusieurs fois" sur l'écran message ----
-  const TAPS_NEEDED = 3;
-  let messageTapCount = 0;
-  const nudgeMessages = [
-    'encore un peu...',
-    'presque...',
-    'allez, une dernière fois...',
-    'juste ici ✨'
-  ];
-
-  function nudgeMessage(){
-    tapHint.textContent = nudgeMessages[(messageTapCount - 1) % nudgeMessages.length];
-    tapHint.classList.remove('shake');
-    void tapHint.offsetWidth;
-    tapHint.classList.add('shake');
-  }
-
-  // ---- Gestion des gestes : Pointer Events uniquement (souris + tactile en un seul flux, sans doublon) ----
+  // L'écran message est désormais affiché directement au deuxième toucher.\n\n  // ---- Gestion des gestes : Pointer Events uniquement (souris + tactile en un seul flux, sans doublon) ----
   let startX = 0, startY = 0, startTime = 0;
 
   stage.addEventListener('touchmove', (e)=>{ e.preventDefault(); }, {passive:false});
@@ -498,6 +478,15 @@
     handleGesture({isSwipe, isTap, dx});
   });
 
+  function goToMessage(){
+    if(state !== 'player') return;
+    state = 'message';
+    stage.dataset.state = 'message';
+    screenMessage.classList.add('pop');
+    setTimeout(()=>screenMessage.classList.remove('pop'), 550);
+    // La musique n'est volontairement ni arrêtée ni redémarrée.
+  }
+
   function handleGesture({isSwipe, isTap, dx}){
     if(state === 'lock' && isTap){
       state = 'player';
@@ -507,23 +496,13 @@
       startAudio();
       return;
     }
+    // Deuxième toucher : n'importe où sur le lecteur ouvre immédiatement le message.
     if(state === 'player' && (isTap || (isSwipe && dx < 0))){
-      state = 'message';
-      stage.dataset.state = 'message';
-      screenMessage.classList.add('pop');
-      setTimeout(()=>screenMessage.classList.remove('pop'), 550);
+      goToMessage();
       return;
     }
-    if(state === 'message' && isTap){
-      if(screenMessage.classList.contains('revealed')) return;
-      messageTapCount++;
-      if(messageTapCount >= TAPS_NEEDED){
-        screenMessage.classList.add('revealed');
-      } else {
-        nudgeMessage();
-      }
-      return;
-    }
+    // L'écran message ne nécessite plus de touches supplémentaires.
+    if(state === 'message') return;
   }
 
   const clockEl = document.getElementById('clockDisplay');
