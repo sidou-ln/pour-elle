@@ -36,13 +36,13 @@
     height:100dvh;
     overflow:hidden;
     touch-action:none;
+    cursor:pointer;
   }
 
-  /* ---------- SCREENS ---------- */
   .screen{
     position:absolute; inset:0;
     display:flex; flex-direction:column; align-items:center;
-    transition: transform .65s cubic-bezier(.22,.61,.36,1), opacity .55s ease;
+    transition: transform .55s cubic-bezier(.22,.61,.36,1), opacity .5s ease;
   }
 
   /* ===== 1. LOCK SCREEN ===== */
@@ -141,12 +141,6 @@
   .cover svg{ width:34%; height:34%; opacity:.55; display:none; }
   .cover.no-cover svg{ display:block; }
 
-  #screen-player.pop{ animation: popIn .5s cubic-bezier(.22,.9,.36,1); }
-  @keyframes popIn{
-    0%{ opacity:.3; }
-    100%{ opacity:1; }
-  }
-
   .track-title{
     font-family:var(--serif);
     color:#fbeff1;
@@ -193,12 +187,13 @@
   }
   #playBtn svg{ width:22px; height:22px; }
 
-  .swipe-hint{
+  .continue-hint{
     position:absolute; bottom:34px; left:0; right:0;
     text-align:center; font-size:12px; color:rgba(255,255,255,.4);
     letter-spacing:.3px;
   }
-  .swipe-hint .arrow{ display:inline-block; animation:nudge 1.6s ease-in-out infinite; }
+  #screen-message .continue-hint{ color:var(--ink-soft); }
+  .continue-hint .arrow{ display:inline-block; animation:nudge 1.6s ease-in-out infinite; }
   @keyframes nudge{ 0%,100%{transform:translateX(0)} 50%{transform:translateX(6px)} }
 
   /* ===== 3. MESSAGE SCREEN ===== */
@@ -211,7 +206,6 @@
     color:var(--ink);
     text-align:center;
   }
-  #screen-message.pop{ animation: popIn .5s cubic-bezier(.22,.9,.36,1); }
 
   .mini-player{
     display:flex; align-items:center; gap:12px;
@@ -279,44 +273,22 @@
   #screen-message.revealed .photo-slot{ opacity:1; transform:translateY(0) scale(1); }
   #screen-message.revealed .message-text{ opacity:1; transform:translateY(0) scale(1); }
 
-  .tap-hint{
-    margin-top:40px; font-size:12px; color:var(--ink-soft);
-    opacity:.8;
-  }
-  #screen-message.revealed .tap-hint{ display:none; }
-
-  .tap-hint.shake{ animation: shakeHint .4s ease; }
-  @keyframes shakeHint{
-    0%,100%{ transform:translateX(0); }
-    20%{ transform:translateX(-6px); }
-    40%{ transform:translateX(6px); }
-    60%{ transform:translateX(-4px); }
-    80%{ transform:translateX(4px); }
-  }
-
-  /* ---------- BOUTON RETOUR ---------- */
-  .back-btn{
-    position:absolute; top:calc(18px + env(safe-area-inset-top,0px)); left:18px; z-index:5;
-    width:34px; height:34px; border-radius:50%;
-    background:rgba(255,255,255,.12);
-    border:none; color:#f5e6e9; font-size:19px; line-height:1;
-    display:flex; align-items:center; justify-content:center;
-    cursor:pointer;
-  }
-  #screen-message .back-btn{
-    background:rgba(44,36,48,.08);
-    color:var(--ink);
-  }
-
   /* ---------- STATE TRANSFORMS ---------- */
   #stage[data-state="player"] #screen-lock{ transform:translateX(-100%); opacity:0; }
   #stage[data-state="player"] #screen-player{ transform:translateX(0); }
 
+  #stage[data-state="message"] #screen-lock{ transform:translateX(-100%); opacity:0; }
   #stage[data-state="message"] #screen-player{ transform:translateX(-100%); }
   #stage[data-state="message"] #screen-message{ transform:translateX(0); }
 </style>
 </head>
 <body>
+
+<!-- 
+  FONCTIONNEMENT : chaque clic/tap n'importe où sur l'écran fait avancer d'une étape
+  dans le cycle : Accueil → Lecteur → Message → Lecteur → Accueil → Lecteur → Message → ...
+  Aucune détection de swipe n'est utilisée : uniquement des clics simples et fiables.
+-->
 
 <div id="stage" data-state="lock">
 
@@ -333,7 +305,6 @@
 
   <!-- 2. LECTEUR MUSIQUE -->
   <section id="screen-player" class="screen">
-    <button class="back-btn" aria-label="retour" data-nav="back">‹</button>
     <div class="cover">
       <img src="assets/IMG_9566.jpeg" alt="" onerror="this.style.display='none'; this.parentElement.classList.add('no-cover');">
       <svg viewBox="0 0 24 24" fill="none" stroke="#f3cdd4" stroke-width="1.4"><path d="M9 18V5l12-2v13" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
@@ -350,17 +321,16 @@
     </div>
 
     <div class="controls">
-      <button aria-label="précédent" data-nav="stop"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
-      <button id="playBtn" aria-label="lecture" data-nav="stop"><svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
-      <button aria-label="suivant" data-nav="stop"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zm-3.5 6L4 6v12z"/></svg></button>
+      <button aria-label="précédent" id="prevBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+      <button id="playBtn" aria-label="lecture"><svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+      <button aria-label="suivant" id="nextBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zm-3.5 6L4 6v12z"/></svg></button>
     </div>
 
-    <div class="swipe-hint">touche pour continuer <span class="arrow">→</span></div>
+    <div class="continue-hint">touche pour continuer <span class="arrow">→</span></div>
   </section>
 
   <!-- 3. ECRAN MESSAGE -->
   <section id="screen-message" class="screen">
-    <button class="back-btn" aria-label="retour" data-nav="back">‹</button>
     <div class="mini-player">
       <div class="mini-cover"><img src="assets/cover.jpg" alt="" onerror="this.style.display='none';"></div>
       <div class="mini-info">
@@ -377,7 +347,7 @@
 
     <p class="message-text">Parce qu'avec toi, je n'ai pas besoin de chercher la réponse.<br><b>C'est toi.</b> <span class="heart">❤️</span></p>
 
-    <p class="tap-hint" id="tapHint">touche encore l'écran</p>
+    <div class="continue-hint">touche pour continuer</div>
   </section>
 
 </div>
@@ -386,6 +356,7 @@
 
 <script>
   const stage = document.getElementById('stage');
+  const screenLock = document.getElementById('screen-lock');
   const screenPlayer = document.getElementById('screen-player');
   const screenMessage = document.getElementById('screen-message');
   const audio = document.getElementById('audio');
@@ -394,10 +365,8 @@
   const progressFill = document.getElementById('progressFill');
   const timeCurrent = document.getElementById('timeCurrent');
   const timeTotal = document.getElementById('timeTotal');
-  const tapHint = document.getElementById('tapHint');
 
   const START_TIME = 15;
-  let state = 'lock';
   let audioStarted = false;
 
   function fmt(s){
@@ -406,104 +375,66 @@
     return m + ':' + String(sec).padStart(2,'0');
   }
 
-  function startAudio(){
-    if(audioStarted) return; // ne redémarre jamais la piste si on revient en arrière puis en avant
+  function startAudioOnce(){
+    if(audioStarted) return;
     audioStarted = true;
     audio.currentTime = START_TIME;
     audio.play().catch(()=>{});
     playIcon.innerHTML = '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>';
   }
 
-  const DISPLAY_END = 83; // 01:23
   audio.addEventListener('loadedmetadata', ()=>{
-    timeTotal.textContent = '1:23';
-    timeCurrent.textContent = '0:15';
+    timeTotal.textContent = fmt(audio.duration);
   });
   audio.addEventListener('timeupdate', ()=>{
-    const elapsed = Math.max(0, audio.currentTime - START_TIME);
-    const visibleDuration = DISPLAY_END - START_TIME;
-    progressFill.style.width = Math.min(100, Math.max(0, elapsed / visibleDuration * 100)) + '%';
-    timeCurrent.textContent = fmt(Math.min(DISPLAY_END, audio.currentTime));
+    if(audio.duration){
+      progressFill.style.width = (audio.currentTime/audio.duration*100)+'%';
+    }
+    timeCurrent.textContent = fmt(audio.currentTime);
   });
 
-  // Le bouton central est visuel : tout toucher sur le lecteur passe à l'étape 3.
+  // ---- Bouton lecture/pause : ne doit jamais faire avancer le cycle ----
   playBtn.addEventListener('click', (e)=>{
     e.stopPropagation();
-    goToMessage();
-  });
-
-  // Tous les boutons (retour, précédent, lecture, suivant) ne doivent jamais
-  // déclencher une navigation d'écran : on bloque la propagation au niveau pointeur.
-  document.querySelectorAll('[data-nav]').forEach(btn=>{
-    btn.addEventListener('pointerdown', (e)=> e.stopPropagation());
-    btn.addEventListener('pointerup', (e)=> e.stopPropagation());
-    btn.addEventListener('click', (e)=> e.stopPropagation());
-  });
-
-  document.querySelectorAll('.back-btn').forEach(btn=>{
-    btn.addEventListener('click', (e)=>{
-      e.stopPropagation();
-      goBack();
-    });
-  });
-
-  function goBack(){
-    if(state === 'message'){
-      state = 'player';
-      stage.dataset.state = 'player';
-      return;
+    if(audio.paused){
+      audio.play();
+      playIcon.innerHTML = '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>';
+    } else {
+      audio.pause();
+      playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
     }
-    if(state === 'player'){
-      state = 'lock';
-      stage.dataset.state = 'lock';
-      return;
+  });
+  document.getElementById('prevBtn').addEventListener('click', (e)=> e.stopPropagation());
+  document.getElementById('nextBtn').addEventListener('click', (e)=> e.stopPropagation());
+
+  // ---- Le cycle des écrans : Accueil → Lecteur → Message → Lecteur → Accueil → ... ----
+  // sequence[idx] donne l'écran affiché à chaque étape. Chaque clic fait idx++ (en boucle).
+  const sequence = ['lock', 'player', 'message', 'player'];
+  let idx = 0; // on démarre sur "lock" (l'accueil)
+
+  function showScreen(key){
+    stage.dataset.state = key;
+
+    const el = key === 'player' ? screenPlayer : key === 'message' ? screenMessage : screenLock;
+    el.style.animation = 'none';
+    void el.offsetWidth;
+    el.style.animation = 'fadeInPop .45s ease';
+
+    if(key === 'player'){
+      startAudioOnce(); // ne démarre la musique que la toute première fois
+      screenMessage.classList.remove('revealed'); // pour réanimer le texte à la prochaine visite
+    }
+    if(key === 'message'){
+      // petit délai pour laisser l'écran arriver avant d'animer l'apparition du texte
+      setTimeout(()=> screenMessage.classList.add('revealed'), 120);
     }
   }
 
-  // L'écran message est désormais affiché directement au deuxième toucher.\n\n  // ---- Gestion des gestes : Pointer Events uniquement (souris + tactile en un seul flux, sans doublon) ----
-  let startX = 0, startY = 0, startTime = 0;
-
-  stage.addEventListener('touchmove', (e)=>{ e.preventDefault(); }, {passive:false});
-
-  stage.addEventListener('pointerdown', (e)=>{
-    startX = e.clientX; startY = e.clientY; startTime = Date.now();
+  // Un seul et unique écouteur de clic pour tout le cycle : simple, fiable, sans ambiguïté.
+  stage.addEventListener('click', ()=>{
+    idx = (idx + 1) % sequence.length;
+    showScreen(sequence[idx]);
   });
-
-  stage.addEventListener('pointerup', (e)=>{
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-    const dt = Date.now() - startTime;
-    const isSwipe = Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy);
-    const isTap = Math.abs(dx) < 12 && Math.abs(dy) < 12 && dt < 400;
-    handleGesture({isSwipe, isTap, dx});
-  });
-
-  function goToMessage(){
-    if(state !== 'player') return;
-    state = 'message';
-    stage.dataset.state = 'message';
-    screenMessage.classList.add('pop');
-    setTimeout(()=>screenMessage.classList.remove('pop'), 550);
-    // La musique n'est volontairement ni arrêtée ni redémarrée.
-  }
-
-  function handleGesture({isSwipe, isTap, dx}){
-    if(state === 'lock' && isTap){
-      state = 'player';
-      stage.dataset.state = 'player';
-      screenPlayer.classList.add('pop');
-      setTimeout(()=>screenPlayer.classList.remove('pop'), 550);
-      startAudio();
-      return;
-    }
-    // Deuxième toucher : n'importe où sur le lecteur ouvre immédiatement le message.
-    if(state === 'player' && (isTap || (isSwipe && dx < 0))){
-      goToMessage();
-      return;
-    }
-    // L'écran message ne nécessite plus de touches supplémentaires.
-    if(state === 'message') return;
-  }
 
   const clockEl = document.getElementById('clockDisplay');
   function tickClock(){
@@ -513,5 +444,12 @@
   tickClock();
   setInterval(tickClock, 15000);
 </script>
+
+<style>
+  @keyframes fadeInPop{
+    0%{ opacity:.4; }
+    100%{ opacity:1; }
+  }
+</style>
 </body>
 </html>
