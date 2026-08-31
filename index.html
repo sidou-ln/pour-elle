@@ -28,7 +28,7 @@
     background:var(--bg-lock);
     touch-action:none;
     user-select:none;
-    overscroll-behavior:none; /* empêche le swipe de faire "retour" dans le navigateur */
+    overscroll-behavior:none;
   }
   #stage{
     position:relative;
@@ -51,7 +51,6 @@
     color:var(--accent-soft);
     z-index:3;
   }
-  /* 📷 Photo de fond de l'écran verrouillé : place ton fichier dans assets/photo-fond.jpg */
   .lock-bg{
     position:absolute; inset:0;
     background:linear-gradient(180deg, rgba(23,16,25,.35), rgba(23,16,25,.75) 70%, var(--bg-lock)),
@@ -135,7 +134,6 @@
     position:relative;
     overflow:hidden;
   }
-  /* 📷 Photo / pochette du titre : place ton fichier dans assets/cover.jpg */
   .cover img{
     position:absolute; inset:0; width:100%; height:100%;
     object-fit:cover;
@@ -143,12 +141,10 @@
   .cover svg{ width:34%; height:34%; opacity:.55; display:none; }
   .cover.no-cover svg{ display:block; }
 
-  /* Animation d'entrée : accueil -> musique */
-  #screen-player.pop{ animation: popIn .6s cubic-bezier(.22,.9,.36,1); }
+  #screen-player.pop{ animation: popIn .5s cubic-bezier(.22,.9,.36,1); }
   @keyframes popIn{
-    0%{ transform:translateX(0) scale(.9); opacity:.3; }
-    60%{ transform:translateX(0) scale(1.03); opacity:1; }
-    100%{ transform:translateX(0) scale(1); opacity:1; }
+    0%{ opacity:.3; }
+    100%{ opacity:1; }
   }
 
   .track-title{
@@ -215,8 +211,7 @@
     color:var(--ink);
     text-align:center;
   }
-  /* Animation d'entrée : musique -> texte */
-  #screen-message.pop{ animation: popIn .6s cubic-bezier(.22,.9,.36,1); }
+  #screen-message.pop{ animation: popIn .5s cubic-bezier(.22,.9,.36,1); }
 
   .mini-player{
     display:flex; align-items:center; gap:12px;
@@ -254,7 +249,6 @@
     border: 1px solid rgba(168,113,125,.15);
     position:relative; overflow:hidden;
   }
-  /* 📷 Photo du couple sur l'écran message : place ton fichier dans assets/photo-message.jpg */
   .photo-slot img{
     position:absolute; inset:0; width:100%; height:100%;
     object-fit:cover; display:none;
@@ -300,6 +294,20 @@
     80%{ transform:translateX(4px); }
   }
 
+  /* ---------- BOUTON RETOUR ---------- */
+  .back-btn{
+    position:absolute; top:calc(18px + env(safe-area-inset-top,0px)); left:18px; z-index:5;
+    width:34px; height:34px; border-radius:50%;
+    background:rgba(255,255,255,.12);
+    border:none; color:#f5e6e9; font-size:19px; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  #screen-message .back-btn{
+    background:rgba(44,36,48,.08);
+    color:var(--ink);
+  }
+
   /* ---------- STATE TRANSFORMS ---------- */
   #stage[data-state="player"] #screen-lock{ transform:translateX(-100%); opacity:0; }
   #stage[data-state="player"] #screen-player{ transform:translateX(0); }
@@ -315,11 +323,9 @@
   <!-- 1. ECRAN VERROUILLE -->
   <section id="screen-lock" class="screen">
     <div class="lock-bg">
-      <!-- Remplace le src ci-dessous par ton image (assets/photo-fond.jpg) -->
       <img src="assets/IMG_9709.jpeg" alt="" onerror="this.style.display='none';">
     </div>
     <div class="glow"></div>
-    <!-- ✏️ Ton petit message mignon ici -->
     <div class="cute-msg">Quelque chose rien que pour toi… 💌</div>
     <div class="clock" id="clockDisplay">00:07</div>
     <div class="hint">touche l'écran</div>
@@ -327,8 +333,8 @@
 
   <!-- 2. LECTEUR MUSIQUE -->
   <section id="screen-player" class="screen">
+    <button class="back-btn" aria-label="retour" data-nav="back">‹</button>
     <div class="cover">
-      <!-- 📷 Pochette / photo du titre : assets/cover.jpg -->
       <img src="assets/IMG_9566.jpeg" alt="" onerror="this.style.display='none'; this.parentElement.classList.add('no-cover');">
       <svg viewBox="0 0 24 24" fill="none" stroke="#f3cdd4" stroke-width="1.4"><path d="M9 18V5l12-2v13" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
     </div>
@@ -344,9 +350,9 @@
     </div>
 
     <div class="controls">
-      <button aria-label="précédent" onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
-      <button id="playBtn" aria-label="lecture" ontouchend="event.stopPropagation();"><svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
-      <button aria-label="suivant" onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zm-3.5 6L4 6v12z"/></svg></button>
+      <button aria-label="précédent" data-nav="stop"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+      <button id="playBtn" aria-label="lecture" data-nav="stop"><svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+      <button aria-label="suivant" data-nav="stop"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zm-3.5 6L4 6v12z"/></svg></button>
     </div>
 
     <div class="swipe-hint">touche pour continuer <span class="arrow">→</span></div>
@@ -354,6 +360,7 @@
 
   <!-- 3. ECRAN MESSAGE -->
   <section id="screen-message" class="screen">
+    <button class="back-btn" aria-label="retour" data-nav="back">‹</button>
     <div class="mini-player">
       <div class="mini-cover"><img src="assets/cover.jpg" alt="" onerror="this.style.display='none';"></div>
       <div class="mini-info">
@@ -364,12 +371,10 @@
     </div>
 
     <div class="photo-slot" id="photoSlot">
-      <!-- 📷 Photo du couple : assets/photo-message.jpg -->
       <img src="assets/photo-message.jpg" alt="" onerror="this.style.display='none';" onload="document.getElementById('photoSlot').classList.add('has-photo')">
       <span class="photo-fallback">sa photo ici<br>(à remplacer)</span>
     </div>
 
-    <!-- ✏️ Ton message final ici -->
     <p class="message-text">Parce qu'avec toi, je n'ai pas besoin de chercher la réponse.<br><b>C'est toi.</b> <span class="heart">❤️</span></p>
 
     <p class="tap-hint" id="tapHint">touche encore l'écran</p>
@@ -377,12 +382,10 @@
 
 </div>
 
-<!-- 🎵 Emplacement du fichier audio : place ton fichier dans assets/musique.mp3 -->
 <audio id="audio" src="assets/SLIMANE - Des milliers de je taime (Clip Officiel).mp3" preload="auto"></audio>
 
 <script>
   const stage = document.getElementById('stage');
-  const screenLock = document.getElementById('screen-lock');
   const screenPlayer = document.getElementById('screen-player');
   const screenMessage = document.getElementById('screen-message');
   const audio = document.getElementById('audio');
@@ -393,8 +396,9 @@
   const timeTotal = document.getElementById('timeTotal');
   const tapHint = document.getElementById('tapHint');
 
-  const START_TIME = 15; // démarrage à 00:15
+  const START_TIME = 15;
   let state = 'lock';
+  let audioStarted = false;
 
   function fmt(s){
     if(!isFinite(s)) return '--:--';
@@ -402,10 +406,12 @@
     return m + ':' + String(sec).padStart(2,'0');
   }
 
-  function playAudio(){
+  function startAudio(){
+    if(audioStarted) return; // ne redémarre jamais la piste si on revient en arrière puis en avant
+    audioStarted = true;
     audio.currentTime = START_TIME;
-    audio.play().catch(()=>{ /* autoplay bloqué tant qu'il n'y a pas eu de geste : normalement ok ici car déclenché par un tap */ });
-    playIcon.innerHTML = '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>'; // icône pause
+    audio.play().catch(()=>{});
+    playIcon.innerHTML = '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>';
   }
 
   audio.addEventListener('loadedmetadata', ()=>{
@@ -429,8 +435,35 @@
     }
   });
 
+  // Tous les boutons (retour, précédent, lecture, suivant) ne doivent jamais
+  // déclencher une navigation d'écran : on bloque la propagation au niveau pointeur.
+  document.querySelectorAll('[data-nav]').forEach(btn=>{
+    btn.addEventListener('pointerdown', (e)=> e.stopPropagation());
+    btn.addEventListener('pointerup', (e)=> e.stopPropagation());
+    btn.addEventListener('click', (e)=> e.stopPropagation());
+  });
+
+  document.querySelectorAll('.back-btn').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      goBack();
+    });
+  });
+
+  function goBack(){
+    if(state === 'message'){
+      state = 'player';
+      stage.dataset.state = 'player';
+      return;
+    }
+    if(state === 'player'){
+      state = 'lock';
+      stage.dataset.state = 'lock';
+      return;
+    }
+  }
+
   // ---- Mécanique "il faut cliquer plusieurs fois" sur l'écran message ----
-  // La musique n'est JAMAIS touchée ici : elle continue de jouer normalement.
   const TAPS_NEEDED = 3;
   let messageTapCount = 0;
   const nudgeMessages = [
@@ -443,41 +476,26 @@
   function nudgeMessage(){
     tapHint.textContent = nudgeMessages[(messageTapCount - 1) % nudgeMessages.length];
     tapHint.classList.remove('shake');
-    void tapHint.offsetWidth; // force le redémarrage de l'animation
+    void tapHint.offsetWidth;
     tapHint.classList.add('shake');
   }
 
-  // ---- Gestion des gestes ----
-  let touchStartX = 0, touchStartY = 0, touchStartTime = 0;
-  let lastGestureTime = 0; // pour éviter que le "click" synthétique redéclenche le geste sur mobile
+  // ---- Gestion des gestes : Pointer Events uniquement (souris + tactile en un seul flux, sans doublon) ----
+  let startX = 0, startY = 0, startTime = 0;
 
-  // Bloque le geste natif "swipe pour revenir en arrière" du navigateur/app
-  stage.addEventListener('touchmove', (e)=>{
-    e.preventDefault();
-  }, {passive:false});
+  stage.addEventListener('touchmove', (e)=>{ e.preventDefault(); }, {passive:false});
 
-  stage.addEventListener('touchstart', (e)=>{
-    const t = e.changedTouches[0];
-    touchStartX = t.clientX; touchStartY = t.clientY;
-    touchStartTime = Date.now();
-  }, {passive:true});
+  stage.addEventListener('pointerdown', (e)=>{
+    startX = e.clientX; startY = e.clientY; startTime = Date.now();
+  });
 
-  stage.addEventListener('touchend', (e)=>{
-    const t = e.changedTouches[0];
-    const dx = t.clientX - touchStartX;
-    const dy = t.clientY - touchStartY;
-    const dt = Date.now() - touchStartTime;
+  stage.addEventListener('pointerup', (e)=>{
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    const dt = Date.now() - startTime;
     const isSwipe = Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy);
     const isTap = Math.abs(dx) < 12 && Math.abs(dy) < 12 && dt < 400;
-
-    lastGestureTime = Date.now();
     handleGesture({isSwipe, isTap, dx});
-  }, {passive:true});
-
-  // fallback souris pour tester sur ordinateur (ignoré juste après un vrai geste tactile)
-  stage.addEventListener('click', ()=>{
-    if(Date.now() - lastGestureTime < 600) return;
-    handleGesture({isSwipe:false, isTap:true, dx:0});
   });
 
   function handleGesture({isSwipe, isTap, dx}){
@@ -485,15 +503,15 @@
       state = 'player';
       stage.dataset.state = 'player';
       screenPlayer.classList.add('pop');
-      setTimeout(()=>screenPlayer.classList.remove('pop'), 650);
-      playAudio(); // la musique démarre directement au clic
+      setTimeout(()=>screenPlayer.classList.remove('pop'), 550);
+      startAudio();
       return;
     }
     if(state === 'player' && (isTap || (isSwipe && dx < 0))){
       state = 'message';
       stage.dataset.state = 'message';
       screenMessage.classList.add('pop');
-      setTimeout(()=>screenMessage.classList.remove('pop'), 650);
+      setTimeout(()=>screenMessage.classList.remove('pop'), 550);
       return;
     }
     if(state === 'message' && isTap){
@@ -502,13 +520,12 @@
       if(messageTapCount >= TAPS_NEEDED){
         screenMessage.classList.add('revealed');
       } else {
-        nudgeMessage(); // pousse à cliquer encore, la musique continue
+        nudgeMessage();
       }
       return;
     }
   }
 
-  // horloge de l'écran verrouillé (juste esthétique)
   const clockEl = document.getElementById('clockDisplay');
   function tickClock(){
     const now = new Date();
