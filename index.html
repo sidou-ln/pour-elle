@@ -21,17 +21,21 @@
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{
-    margin:0; padding:0; height:100%; overflow:hidden;
+    margin:0; padding:0;
+    position:fixed; inset:0; width:100%; height:100%;
+    overflow:hidden;
     font-family:var(--sans);
     background:var(--bg-lock);
     touch-action:none;
     user-select:none;
+    overscroll-behavior:none; /* empêche le swipe de faire "retour" dans le navigateur */
   }
   #stage{
     position:relative;
     width:100%;
     height:100dvh;
     overflow:hidden;
+    touch-action:none;
   }
 
   /* ---------- SCREENS ---------- */
@@ -139,6 +143,7 @@
   .cover svg{ width:34%; height:34%; opacity:.55; display:none; }
   .cover.no-cover svg{ display:block; }
 
+  /* Animation d'entrée : accueil -> musique */
   #screen-player.pop{ animation: popIn .6s cubic-bezier(.22,.9,.36,1); }
   @keyframes popIn{
     0%{ transform:translateX(0) scale(.9); opacity:.3; }
@@ -210,6 +215,9 @@
     color:var(--ink);
     text-align:center;
   }
+  /* Animation d'entrée : musique -> texte */
+  #screen-message.pop{ animation: popIn .6s cubic-bezier(.22,.9,.36,1); }
+
   .mini-player{
     display:flex; align-items:center; gap:12px;
     width:100%; max-width:340px;
@@ -241,8 +249,8 @@
     display:flex; align-items:center; justify-content:center;
     color:#a8717d; font-size:13px; text-align:center; padding:16px;
     margin-bottom:36px;
-    opacity:0; transform:translateY(14px) scale(.96);
-    transition: opacity .7s ease, transform .7s ease;
+    opacity:0; transform:translateY(14px) scale(.94);
+    transition: opacity .7s cubic-bezier(.22,.9,.36,1), transform .7s cubic-bezier(.22,.9,.36,1);
     border: 1px solid rgba(168,113,125,.15);
     position:relative; overflow:hidden;
   }
@@ -260,13 +268,22 @@
     font-size:clamp(19px,5.4vw,24px);
     line-height:1.5;
     max-width:300px;
-    opacity:0; transform:translateY(14px);
-    transition: opacity .8s ease .15s, transform .8s ease .15s;
+    opacity:0; transform:translateY(16px) scale(.97);
+    transition: opacity .8s cubic-bezier(.22,.9,.36,1) .15s, transform .8s cubic-bezier(.22,.9,.36,1) .15s;
   }
   .message-text b{ font-weight:500; color:#c96b7d; }
+  .heart{
+    display:inline-block;
+    animation: heartbeat 1.15s ease-in-out infinite;
+    transform-origin:center;
+  }
+  @keyframes heartbeat{
+    0%,100%{ transform:scale(1); }
+    50%{ transform:scale(1.22); }
+  }
 
   #screen-message.revealed .photo-slot{ opacity:1; transform:translateY(0) scale(1); }
-  #screen-message.revealed .message-text{ opacity:1; transform:translateY(0); }
+  #screen-message.revealed .message-text{ opacity:1; transform:translateY(0) scale(1); }
 
   .tap-hint{
     margin-top:40px; font-size:12px; color:var(--ink-soft);
@@ -281,9 +298,6 @@
     40%{ transform:translateX(6px); }
     60%{ transform:translateX(-4px); }
     80%{ transform:translateX(4px); }
-  }
-  .dots{
-    margin-top:10px; font-size:14px; letter-spacing:4px;
   }
 
   /* ---------- STATE TRANSFORMS ---------- */
@@ -356,7 +370,7 @@
     </div>
 
     <!-- ✏️ Ton message final ici -->
-    <p class="message-text">Parce qu'avec toi, je n'ai pas besoin de chercher la réponse.<br><b>C'est toi.</b> ❤️</p>
+    <p class="message-text">Parce qu'avec toi, je n'ai pas besoin de chercher la réponse.<br><b>C'est toi.</b> <span class="heart">❤️</span></p>
 
     <p class="tap-hint" id="tapHint">touche encore l'écran</p>
   </section>
@@ -435,6 +449,12 @@
 
   // ---- Gestion des gestes ----
   let touchStartX = 0, touchStartY = 0, touchStartTime = 0;
+  let lastGestureTime = 0; // pour éviter que le "click" synthétique redéclenche le geste sur mobile
+
+  // Bloque le geste natif "swipe pour revenir en arrière" du navigateur/app
+  stage.addEventListener('touchmove', (e)=>{
+    e.preventDefault();
+  }, {passive:false});
 
   stage.addEventListener('touchstart', (e)=>{
     const t = e.changedTouches[0];
@@ -450,11 +470,15 @@
     const isSwipe = Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy);
     const isTap = Math.abs(dx) < 12 && Math.abs(dy) < 12 && dt < 400;
 
+    lastGestureTime = Date.now();
     handleGesture({isSwipe, isTap, dx});
   }, {passive:true});
 
-  // fallback souris pour tester sur ordinateur
-  stage.addEventListener('click', ()=>{ handleGesture({isSwipe:false, isTap:true, dx:0}); });
+  // fallback souris pour tester sur ordinateur (ignoré juste après un vrai geste tactile)
+  stage.addEventListener('click', ()=>{
+    if(Date.now() - lastGestureTime < 600) return;
+    handleGesture({isSwipe:false, isTap:true, dx:0});
+  });
 
   function handleGesture({isSwipe, isTap, dx}){
     if(state === 'lock' && isTap){
@@ -468,6 +492,8 @@
     if(state === 'player' && (isSwipe && dx < 0)){
       state = 'message';
       stage.dataset.state = 'message';
+      screenMessage.classList.add('pop');
+      setTimeout(()=>screenMessage.classList.remove('pop'), 650);
       return;
     }
     if(state === 'message' && isTap){
